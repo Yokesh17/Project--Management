@@ -65,10 +65,10 @@ lerna-debug.log*
 .eslintcache
 coverage/
 .cache
-dist-ssr/
+
 # Dist/Build (Frontend) - excluding root dist/ if it exists, matching specifically in frontend if needed, but 'dist/' matches everywhere. 
 # Since python also uses 'dist/', we can be careful or just ignore all 'dist/'. Python usually uses dist/ for packages. Frontend for builds. Ignoring 'dist/' globally is usually fine for this project type.
-dist/
+
 
 # Specific backend/frontend ignores if previously anchored
 backend/pip-log.txt
