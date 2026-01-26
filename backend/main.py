@@ -17,7 +17,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],  # For development. In production, change to: ["https://yokesh17.pythonanywhere.com"]
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
