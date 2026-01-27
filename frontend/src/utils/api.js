@@ -9,7 +9,7 @@ const getBaseUrl = () => {
 };
 
 const api = axios.create({
-    baseURL: getBaseUrl(),
+    baseURL: import.meta.env.PROD ? '' : 'http://localhost:8000',
 });
 
 api.interceptors.request.use((config) => {
