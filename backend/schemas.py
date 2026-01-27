@@ -150,6 +150,7 @@ class ProjectCreate(ProjectBase):
 class Project(ProjectBase):
     id: int
     owner_id: int
+    owner: User  # Include owner details
     created_at: datetime
     tasks: List[Task] = []
     members: List[User] = [] # Include members

@@ -55,10 +55,10 @@ const NotificationCenter = () => {
                     <>
                         <div className="fixed inset-0 z-40" onClick={() => setShow(false)}></div>
                         <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 10 }}
-                            className="absolute right-0 mt-2 w-80 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden"
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            className="fixed top-16 right-4 left-4 md:absolute md:top-full md:right-0 md:left-auto md:w-80 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden md:mt-2"
                         >
                             <div className="p-3 border-b border-slate-700 bg-slate-800/90 backdrop-blur pb-2">
                                 <h3 className="text-sm font-semibold text-white">Notifications</h3>
