@@ -11,14 +11,18 @@ const Dashboard = () => {
     const [showCreate, setShowCreate] = useState(false);
     const [newProject, setNewProject] = useState({ name: '', description: '' });
     const [deleteConfirm, setDeleteConfirm] = useState({ open: false, projectId: null });
+    const [loading, setLoading] = useState(true);
     const dispatch = useDispatch();
 
     const fetchProjects = async () => {
+        setLoading(true);
         try {
             const res = await api.get('/projects/');
             setProjects(res.data);
         } catch (error) {
             console.error(error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -83,51 +87,59 @@ const Dashboard = () => {
                 </div>
 
                 {/* Projects Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                    {projects.map(project => (
-                        <div
-                            key={project.id}
-                            className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 hover:border-slate-600 transition group relative"
-                        >
-                            <button
-                                onClick={() => setDeleteConfirm({ open: true, projectId: project.id })}
-                                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition"
-                            >
-                                <Trash2 size={14} />
-                            </button>
-                            <div className="flex items-start gap-2.5">
-                                <div className="w-8 h-8 bg-indigo-600/20 text-indigo-400 rounded flex items-center justify-center shrink-0">
-                                    <Folder size={14} />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <h3 className="text-sm font-medium truncate pr-4">{project.name}</h3>
-                                    <p className="text-xs text-slate-500 truncate">{project.description || 'No description'}</p>
-                                </div>
-                            </div>
-                            <div className="mt-3 flex items-center justify-between">
-                                <div className="flex items-center gap-1 text-xs text-slate-500">
-                                    <Clock size={12} />
-                                    <span>{project.tasks?.length || 0} tasks</span>
-                                </div>
-                                <Link
-                                    to={`/project/${project.id}`}
-                                    className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-medium transition"
-                                >
-                                    Open <ArrowRight size={12} />
-                                </Link>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {projects.length === 0 && (
-                    <div className="text-center py-16">
-                        <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <FolderPlus size={20} className="text-slate-500" />
-                        </div>
-                        <p className="text-sm text-slate-500">No projects yet</p>
-                        <p className="text-xs text-slate-600 mt-1">Create your first project to get started</p>
+                {loading ? (
+                    <div className="flex justify-center py-20">
+                        <div className="w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
                     </div>
+                ) : (
+                    <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                            {projects.map(project => (
+                                <div
+                                    key={project.id}
+                                    className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 hover:border-slate-600 transition group relative"
+                                >
+                                    <button
+                                        onClick={() => setDeleteConfirm({ open: true, projectId: project.id })}
+                                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                    <div className="flex items-start gap-2.5">
+                                        <div className="w-8 h-8 bg-indigo-600/20 text-indigo-400 rounded flex items-center justify-center shrink-0">
+                                            <Folder size={14} />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <h3 className="text-sm font-medium truncate pr-4">{project.name}</h3>
+                                            <p className="text-xs text-slate-500 truncate">{project.description || 'No description'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 flex items-center justify-between">
+                                        <div className="flex items-center gap-1 text-xs text-slate-500">
+                                            <Clock size={12} />
+                                            <span>{project.tasks?.length || 0} tasks</span>
+                                        </div>
+                                        <Link
+                                            to={`/project/${project.id}`}
+                                            className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-medium transition"
+                                        >
+                                            Open <ArrowRight size={12} />
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {projects.length === 0 && (
+                            <div className="text-center py-16">
+                                <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <FolderPlus size={20} className="text-slate-500" />
+                                </div>
+                                <p className="text-sm text-slate-500">No projects yet</p>
+                                <p className="text-xs text-slate-600 mt-1">Create your first project to get started</p>
+                            </div>
+                        )}
+                    </>
                 )}
             </main>
 

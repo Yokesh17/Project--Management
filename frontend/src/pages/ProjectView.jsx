@@ -2,7 +2,7 @@ import React, { useEffect, useState, Fragment } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../utils/api';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { Plus, UserPlus, ArrowLeft, Trash2, Settings, Paperclip, Filter, Search, Activity, Clock, X, BookOpen, Archive, ChevronDown, Check, BarChart2 } from 'lucide-react';
+import { Plus, UserPlus, ArrowLeft, Trash2, Settings, Paperclip, Filter, Search, Activity, Clock, X, BookOpen, Archive, ChevronDown, Check, BarChart2, Eye, EyeOff } from 'lucide-react';
 import ConfirmDialog from '../components/ConfirmDialog';
 import TaskDetailModal from '../components/TaskDetailModal';
 import ActivityLogModal from '../components/ActivityLogModal';
@@ -25,6 +25,7 @@ const ProjectView = () => {
     const [showActivityLog, setShowActivityLog] = useState(false);
     const [showPlanning, setShowPlanning] = useState(false);
     const [showArchived, setShowArchived] = useState(false);
+    const [showArchivedOnBoard, setShowArchivedOnBoard] = useState(false);
     const [showProjectFiles, setShowProjectFiles] = useState(false);
     const [showAnalytics, setShowAnalytics] = useState(false);
     const [showAssigneeFilter, setShowAssigneeFilter] = useState(false);
@@ -146,8 +147,8 @@ const ProjectView = () => {
     const archivedTasksCount = archivedList.length;
 
     const filteredTasks = tasks.filter(t => {
-        // Exclude archived tasks from the main view
-        if (isArchived(t)) return false;
+        // Exclude archived tasks from the main view UNLESS showArchivedOnBoard is true
+        if (!showArchivedOnBoard && isArchived(t)) return false;
 
         const matchesStage = (t.stage_id === selectedStageId) || (!t.stage_id && selectedStageId === null);
         const matchesAssignee = (filterAssignee === 'ALL' || (t.assignee_id && String(t.assignee_id) === String(filterAssignee)));
@@ -238,6 +239,14 @@ const ProjectView = () => {
                         >
                             <Clock size={12} /> Overdue
                         </button>
+                        <div className="w-px h-4 bg-slate-700 mx-1"></div>
+                        <button
+                            onClick={() => setShowArchivedOnBoard(!showArchivedOnBoard)}
+                            className={`px-2 py-0.5 text-xs rounded transition flex items-center gap-1 ${showArchivedOnBoard ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-400 hover:text-white'}`}
+                            title={showArchivedOnBoard ? "Hide Archived Tasks on Board" : "Show Archived Tasks on Board"}
+                        >
+                            {showArchivedOnBoard ? <Eye size={12} /> : <EyeOff size={12} />} Archived
+                        </button>
                     </div>
 
                     <div className="h-6 w-px bg-slate-700 mx-1"></div>
@@ -245,7 +254,7 @@ const ProjectView = () => {
                     <button
                         onClick={() => setShowArchived(true)}
                         className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-700 rounded transition border border-transparent hover:border-slate-600"
-                        title="Archived Tasks"
+                        title="Archived Tasks Modal"
                     >
                         <Archive size={14} />
                         <span className="hidden sm:inline">Archived</span>

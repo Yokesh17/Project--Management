@@ -10,7 +10,9 @@ router = APIRouter()
 
 @router.get("/projects/", response_model=List[schemas.Project])
 def read_projects(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return list(set(current_user.owned_projects + current_user.joined_projects))
+    all_projects = list(set(current_user.owned_projects + current_user.joined_projects))
+    all_projects.sort(key=lambda x: x.created_at, reverse=True)
+    return all_projects
 
 @router.post("/projects/", response_model=schemas.Project)
 def create_project(project: schemas.ProjectCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):

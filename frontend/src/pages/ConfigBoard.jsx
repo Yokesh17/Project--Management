@@ -11,13 +11,17 @@ const ConfigBoard = () => {
     const [newConfig, setNewConfig] = useState({ name: '', content: '{}' });
     const [shareInfo, setShareInfo] = useState(null);
     const [deleteConfirm, setDeleteConfirm] = useState({ open: false, configId: null });
+    const [loading, setLoading] = useState(true);
 
     const fetchConfigs = async () => {
+        setLoading(true);
         try {
             const res = await api.get(`/projects/${id}/configs/`);
             setConfigs(res.data);
         } catch (error) {
             console.error(error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -95,42 +99,50 @@ const ConfigBoard = () => {
 
             {/* Main */}
             <main className="max-w-5xl mx-auto px-4 py-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {configs.map(config => (
-                        <div key={config.id} className="bg-slate-800/50 border border-slate-700/50 rounded-lg overflow-hidden">
-                            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700/50">
-                                <span className="text-xs font-medium">{config.name}</span>
-                                <div className="flex items-center gap-1">
-                                    {config.share_token && (
-                                        <span className="text-xs text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">shared</span>
-                                    )}
-                                    <button onClick={() => handleShare(config.id)} className="p-1 text-slate-400 hover:text-indigo-400 transition">
-                                        <Share2 size={12} />
-                                    </button>
-                                    <button onClick={() => setDeleteConfirm({ open: true, configId: config.id })} className="p-1 text-slate-400 hover:text-red-400 transition">
-                                        <Trash2 size={12} />
-                                    </button>
-                                </div>
-                            </div>
-                            <textarea
-                                className="w-full h-40 bg-slate-900/50 text-green-400 p-3 text-xs font-mono resize-none focus:outline-none"
-                                defaultValue={config.content}
-                                onBlur={(e) => {
-                                    if (e.target.value !== config.content) {
-                                        handleUpdate(config.id, e.target.value);
-                                    }
-                                }}
-                                spellCheck={false}
-                            />
-                        </div>
-                    ))}
-                </div>
-
-                {configs.length === 0 && (
-                    <div className="text-center py-16">
-                        <FileCode size={24} className="text-slate-600 mx-auto mb-2" />
-                        <p className="text-xs text-slate-500">No configs yet</p>
+                {loading ? (
+                    <div className="flex justify-center py-20">
+                        <div className="w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
                     </div>
+                ) : (
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {configs.map(config => (
+                                <div key={config.id} className="bg-slate-800/50 border border-slate-700/50 rounded-lg overflow-hidden">
+                                    <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700/50">
+                                        <span className="text-xs font-medium">{config.name}</span>
+                                        <div className="flex items-center gap-1">
+                                            {config.share_token && (
+                                                <span className="text-xs text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">shared</span>
+                                            )}
+                                            <button onClick={() => handleShare(config.id)} className="p-1 text-slate-400 hover:text-indigo-400 transition">
+                                                <Share2 size={12} />
+                                            </button>
+                                            <button onClick={() => setDeleteConfirm({ open: true, configId: config.id })} className="p-1 text-slate-400 hover:text-red-400 transition">
+                                                <Trash2 size={12} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <textarea
+                                        className="w-full h-40 bg-slate-900/50 text-green-400 p-3 text-xs font-mono resize-none focus:outline-none"
+                                        defaultValue={config.content}
+                                        onBlur={(e) => {
+                                            if (e.target.value !== config.content) {
+                                                handleUpdate(config.id, e.target.value);
+                                            }
+                                        }}
+                                        spellCheck={false}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+
+                        {configs.length === 0 && (
+                            <div className="text-center py-16">
+                                <FileCode size={24} className="text-slate-600 mx-auto mb-2" />
+                                <p className="text-xs text-slate-500">No configs yet</p>
+                            </div>
+                        )}
+                    </>
                 )}
             </main>
 
