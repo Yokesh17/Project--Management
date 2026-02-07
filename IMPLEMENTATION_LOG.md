@@ -106,3 +106,6 @@ This document provides a comprehensive overview of the **Project Management Appl
 *   **UI**: Improved mobile layout for notifications.
 *   **Deployment**: Updated API base URL strategy for platform-agnostic deployment.
 *   **Authentication**: Implemented Axios interceptor to automatically log out users and redirect to login upon token expiration (401 errors).
+*   **Logic**: Projects are now sorted by creation date (newest first).
+*   **UI**: Added loading spinners for Dashboard and Config Board.
+*   **UI**: Added "Show/Hide Archived" toggle in Project Board to allow viewing archived tasks in their original stages.
