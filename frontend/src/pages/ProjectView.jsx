@@ -109,7 +109,10 @@ const ProjectView = () => {
 
     const handleDeleteConfirm = async () => {
         try {
-            if (deleteConfirm.type === 'task') {
+            if (deleteConfirm.type === 'member') {
+                await api.delete(`/projects/${id}/members/${deleteConfirm.id}`);
+                setProject({ ...project, members: project.members.filter(m => m.id !== deleteConfirm.id) });
+            } else if (deleteConfirm.type === 'task') {
                 await api.delete(`/tasks/${deleteConfirm.id}`);
                 setTasks(tasks.filter(t => t.id !== deleteConfirm.id)); // Optimistic update
                 if (selectedTask?.id === deleteConfirm.id) setSelectedTask(null);
@@ -235,8 +238,12 @@ const ProjectView = () => {
                             </button>
                             {showAssigneeFilter && (
                                 <Fragment>
-                                    <div className="fixed inset-0 z-10" onClick={() => setShowAssigneeFilter(false)}></div>
-                                    <div className="absolute left-0 right-0 md:left-auto md:right-0 top-full mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-20 py-1 overflow-hidden w-full md:w-48">
+                                    <div className="fixed inset-0 z-50 bg-black/50 md:bg-transparent" onClick={() => setShowAssigneeFilter(false)}></div>
+                                    <div className="absolute left-0 right-0 md:left-auto md:right-0 top-full mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 py-1 overflow-hidden w-full md:w-56 animate-in fade-in zoom-in duration-100">
+                                        <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700 md:hidden">
+                                            <span className="text-xs font-semibold text-slate-300">Select Member</span>
+                                            <button onClick={() => setShowAssigneeFilter(false)} className="text-slate-500 hover:text-white"><X size={14} /></button>
+                                        </div>
                                         <button onClick={() => { setFilterAssignee('ALL'); setShowAssigneeFilter(false); }} className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-700 flex items-center justify-between ${filterAssignee === 'ALL' ? 'text-indigo-400 bg-slate-700/50' : 'text-slate-300'}`}>
                                             All Members {filterAssignee === 'ALL' && <Check size={12} />}
                                         </button>
@@ -323,7 +330,7 @@ const ProjectView = () => {
                     <Link to={`/project/${id}/configs`} className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded transition" title="Configs">
                         <Settings size={16} />
                     </Link>
-                    <button onClick={() => setShowInviteModal(true)} className="p-2 text-indigo-400 hover:bg-indigo-500/10 rounded transition" title="Invite User">
+                    <button onClick={() => setShowInviteModal(true)} className="p-2 text-indigo-400 hover:bg-indigo-500/10 rounded transition" title="Add Member">
                         <UserPlus size={16} />
                     </button>
                 </div>
@@ -565,7 +572,7 @@ const ProjectView = () => {
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
                     <div className="bg-slate-800 border border-slate-700 rounded-lg w-full max-w-sm shadow-2xl">
                         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
-                            <h3 className="text-sm font-semibold">Invite Member</h3>
+                            <h3 className="text-sm font-semibold">Add Member</h3>
                             <button onClick={() => setShowInviteModal(false)} className="text-slate-400 hover:text-white"><X size={16} /></button>
                         </div>
                         <form onSubmit={handleInvite} className="p-4 space-y-3">
@@ -581,7 +588,7 @@ const ProjectView = () => {
                                 />
                             </div>
                             <div className="flex justify-end gap-2 pt-2">
-                                <button type="submit" className="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 rounded font-medium text-white">Invite</button>
+                                <button type="submit" className="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 rounded font-medium text-white">Add Member</button>
                             </div>
                         </form>
 
@@ -612,8 +619,14 @@ const ProjectView = () => {
                                         </div>
                                         {user && user.id === project.owner_id && (
                                             <button
-                                                onClick={() => handleRemoveMember(member.id)}
-                                                className="text-slate-500 hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition"
+                                                onClick={() => setDeleteConfirm({
+                                                    open: true,
+                                                    type: 'member',
+                                                    id: member.id,
+                                                    title: `Remove ${member.full_name}`,
+                                                    message: `Are you sure you want to remove ${member.full_name} from this project?`
+                                                })}
+                                                className="text-slate-500 hover:text-red-400 p-1 opacity-100 transition"
                                                 title="Remove Member"
                                             >
                                                 <Trash2 size={14} />
@@ -635,9 +648,9 @@ const ProjectView = () => {
                 isOpen={deleteConfirm.open}
                 onClose={() => setDeleteConfirm({ open: false, type: null, id: null })}
                 onConfirm={handleDeleteConfirm}
-                title="Delete Task"
-                message="Are you sure you want to delete this task? This action cannot be undone."
-                confirmText="Delete"
+                title={deleteConfirm.title || "Delete Item"}
+                message={deleteConfirm.message || "Are you sure you want to delete this item? This action cannot be undone."}
+                confirmText="Confirm"
                 variant="danger"
             />
         </div>
