@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { setCredentials } from '../store/authSlice';
 import api from '../utils/api';
 import { useNavigate, Link } from 'react-router-dom';
@@ -12,6 +12,13 @@ const Login = () => {
     const navigate = useNavigate();
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const { isAuthenticated } = useSelector((state) => state.auth);
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/dashboard');
+        }
+    }, [isAuthenticated, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -32,15 +39,19 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4">
-            <div className="w-full max-w-xs">
+        <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+            {/* Background Effects */}
+            <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/10 blur-3xl pointer-events-none"></div>
+            <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
+
+            <div className="w-full max-w-xs relative z-10">
                 {/* Logo */}
-                <div className="flex items-center justify-center gap-2 mb-8">
-                    <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                <Link to="/" className="flex items-center justify-center gap-2 mb-8 hover:opacity-80 transition">
+                    <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
                         <Folder size={16} className="text-white" />
                     </div>
                     <span className="text-lg font-semibold text-white">ProjectManager</span>
-                </div>
+                </Link>
 
                 {/* Form Card */}
                 <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-5">

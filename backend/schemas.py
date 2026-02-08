@@ -12,6 +12,7 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: int
     created_at: datetime
+    plan: Optional[str] = "free"
     class Config:
         from_attributes = True
 

@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import ProjectView from './pages/ProjectView';
 import ConfigBoard from './pages/ConfigBoard';
 import SharedConfig from './pages/SharedConfig';
+import Home from './pages/Home';
 
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -33,11 +34,12 @@ function App() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<PageWrapper><Home /></PageWrapper>} />
         <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
         <Route path="/signup" element={<PageWrapper><Signup /></PageWrapper>} />
         <Route path="/shared/:token" element={<PageWrapper><SharedConfig /></PageWrapper>} />
         <Route
-          path="/"
+          path="/dashboard"
           element={
             <PrivateRoute>
               <PageWrapper><Dashboard /></PageWrapper>

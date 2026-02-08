@@ -18,6 +18,8 @@ class User(Base):
     hashed_password = Column(String(255))
     full_name = Column(String(255))
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    plan = Column(String(50), default="free") # free, paid
+    api_token = Column(String(500), nullable=True) # store long-lived token
     
     owned_projects = relationship("Project", back_populates="owner")
     joined_projects = relationship("Project", secondary=project_members, back_populates="members")

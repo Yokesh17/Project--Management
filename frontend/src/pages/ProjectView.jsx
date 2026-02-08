@@ -1,8 +1,9 @@
 import React, { useEffect, useState, Fragment } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../utils/api';
+import { useSelector } from 'react-redux';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { Plus, UserPlus, ArrowLeft, Trash2, Settings, Paperclip, Filter, Search, Activity, Clock, X, BookOpen, Archive, ChevronDown, Check, BarChart2, Eye, EyeOff } from 'lucide-react';
+import { Plus, UserPlus, ArrowLeft, Trash2, Settings, Paperclip, Filter, Search, Activity, Clock, X, BookOpen, Archive, ChevronDown, Check, BarChart2, Eye, EyeOff, Menu } from 'lucide-react';
 import ConfirmDialog from '../components/ConfirmDialog';
 import TaskDetailModal from '../components/TaskDetailModal';
 import ActivityLogModal from '../components/ActivityLogModal';
@@ -16,6 +17,7 @@ import { format } from 'date-fns';
 
 const ProjectView = () => {
     const { id } = useParams();
+    const { user } = useSelector(state => state.auth);
     const [project, setProject] = useState(null);
     const [tasks, setTasks] = useState([]);
 
@@ -31,6 +33,7 @@ const ProjectView = () => {
     const [showAssigneeFilter, setShowAssigneeFilter] = useState(false);
     const [selectedStageId, setSelectedStageId] = useState(null);
     const [showStageModal, setShowStageModal] = useState(false);
+    const [showMobileFilters, setShowMobileFilters] = useState(false);
 
     const [selectedTask, setSelectedTask] = useState(null);
     const [newTask, setNewTask] = useState({ title: '', description: '', status: 'TODO', priority: 'MEDIUM' });
@@ -91,6 +94,16 @@ const ProjectView = () => {
             fetchProject();
         } catch (error) {
             alert(error.response?.data?.detail || 'Error inviting user');
+        }
+    };
+
+    const handleRemoveMember = async (memberId) => {
+        if (!window.confirm("Are you sure you want to remove this member?")) return;
+        try {
+            await api.delete(`/projects/${id}/members/${memberId}`);
+            fetchProject();
+        } catch (error) {
+            alert(error.response?.data?.detail || 'Error removing user');
         }
     };
 
@@ -175,7 +188,7 @@ const ProjectView = () => {
             {/* Header */}
             <header className="flex items-center justify-between px-4 py-2 bg-slate-800/50 border-b border-slate-700">
                 <div className="flex items-center gap-3">
-                    <Link to="/" className="text-slate-400 hover:text-white transition"><ArrowLeft size={16} /></Link>
+                    <Link to="/dashboard" className="text-slate-400 hover:text-white transition"><ArrowLeft size={16} /></Link>
                     <div>
                         <h1 className="text-sm font-semibold flex items-center gap-2">
                             {project.name}
@@ -189,22 +202,31 @@ const ProjectView = () => {
                 {/* Controls */}
                 <div className="flex items-center gap-2 flex-wrap">
                     {/* Filters */}
-                    <div className="hidden md:flex items-center gap-2 bg-slate-800 rounded-lg p-1 border border-slate-700">
-                        <Search size={14} className="text-slate-500 ml-1" />
-                        <input
-                            placeholder="Filter tasks..."
-                            className="bg-transparent border-none text-xs w-32 focus:ring-0 placeholder-slate-500"
-                            value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
-                        />
-                        <div className="w-px h-4 bg-slate-700"></div>
+                    <button
+                        className="md:hidden p-2 text-slate-400 hover:text-white bg-slate-800 rounded-lg border border-slate-700"
+                        onClick={() => setShowMobileFilters(!showMobileFilters)}
+                    >
+                        <Filter size={16} />
+                    </button>
 
-                        <div className="relative">
+                    <div className={`${showMobileFilters ? 'flex flex-col absolute top-[110px] left-4 right-4 bg-slate-800 p-3 rounded-lg shadow-xl z-30 border border-slate-700 gap-3' : 'hidden'} md:flex md:flex-row md:items-center md:gap-2 md:bg-slate-800 md:rounded-lg md:p-1 md:border md:border-slate-700 md:static`}>
+                        <div className="flex items-center gap-2 bg-slate-900/50 md:bg-transparent rounded px-2 py-1 md:p-0 w-full md:w-auto">
+                            <Search size={14} className="text-slate-500" />
+                            <input
+                                placeholder="Filter tasks..."
+                                className="bg-transparent border-none text-xs w-full md:w-32 focus:ring-0 placeholder-slate-500"
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                        <div className="hidden md:block w-px h-4 bg-slate-700"></div>
+
+                        <div className="relative w-full md:w-auto">
                             <button
                                 onClick={() => setShowAssigneeFilter(!showAssigneeFilter)}
-                                className="flex items-center gap-1 text-xs text-slate-300 px-2 py-0.5 hover:bg-slate-700/50 rounded transition"
+                                className="w-full md:w-auto flex items-center justify-between gap-1 text-xs text-slate-300 px-2 py-1.5 md:py-0.5 bg-slate-700/50 md:bg-transparent rounded hover:bg-slate-700/50 transition"
                             >
-                                <span className="truncate max-w-[100px]">{
+                                <span className="truncate max-w-[150px] md:max-w-[100px]">{
                                     filterAssignee === 'ALL' ? 'All Members' :
                                         filterAssignee == project.owner_id ? 'Owner' :
                                             (project.members?.find(m => m.id == filterAssignee)?.full_name || 'Unknown')
@@ -214,7 +236,7 @@ const ProjectView = () => {
                             {showAssigneeFilter && (
                                 <Fragment>
                                     <div className="fixed inset-0 z-10" onClick={() => setShowAssigneeFilter(false)}></div>
-                                    <div className="absolute right-0 top-full mt-1 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-20 py-1 overflow-hidden">
+                                    <div className="absolute left-0 right-0 md:left-auto md:right-0 top-full mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-20 py-1 overflow-hidden w-full md:w-48">
                                         <button onClick={() => { setFilterAssignee('ALL'); setShowAssigneeFilter(false); }} className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-700 flex items-center justify-between ${filterAssignee === 'ALL' ? 'text-indigo-400 bg-slate-700/50' : 'text-slate-300'}`}>
                                             All Members {filterAssignee === 'ALL' && <Check size={12} />}
                                         </button>
@@ -231,22 +253,24 @@ const ProjectView = () => {
                                 </Fragment>
                             )}
                         </div>
-                        <div className="w-px h-4 bg-slate-700 mx-1"></div>
-                        <button
-                            onClick={() => setShowOverdue(!showOverdue)}
-                            className={`px-2 py-0.5 text-xs rounded transition flex items-center gap-1 ${showOverdue ? 'bg-red-500/20 text-red-400' : 'text-slate-400 hover:text-white'
-                                }`}
-                        >
-                            <Clock size={12} /> Overdue
-                        </button>
-                        <div className="w-px h-4 bg-slate-700 mx-1"></div>
-                        <button
-                            onClick={() => setShowArchivedOnBoard(!showArchivedOnBoard)}
-                            className={`px-2 py-0.5 text-xs rounded transition flex items-center gap-1 ${showArchivedOnBoard ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-400 hover:text-white'}`}
-                            title={showArchivedOnBoard ? "Hide Archived Tasks on Board" : "Show Archived Tasks on Board"}
-                        >
-                            {showArchivedOnBoard ? <Eye size={12} /> : <EyeOff size={12} />} Archived
-                        </button>
+                        <div className="hidden md:block w-px h-4 bg-slate-700 mx-1"></div>
+                        <div className="flex items-center gap-2 md:contents">
+                            <button
+                                onClick={() => setShowOverdue(!showOverdue)}
+                                className={`flex-1 md:flex-none justify-center px-2 py-1.5 md:py-0.5 text-xs rounded transition flex items-center gap-1 ${showOverdue ? 'bg-red-500/20 text-red-400' : 'bg-slate-700/30 md:bg-transparent text-slate-400 hover:text-white'
+                                    }`}
+                            >
+                                <Clock size={12} /> Overdue
+                            </button>
+                            <div className="hidden md:block w-px h-4 bg-slate-700 mx-1"></div>
+                            <button
+                                onClick={() => setShowArchivedOnBoard(!showArchivedOnBoard)}
+                                className={`flex-1 md:flex-none justify-center px-2 py-1.5 md:py-0.5 text-xs rounded transition flex items-center gap-1 ${showArchivedOnBoard ? 'bg-indigo-500/20 text-indigo-400' : 'bg-slate-700/30 md:bg-transparent text-slate-400 hover:text-white'}`}
+                                title={showArchivedOnBoard ? "Hide Archived Tasks on Board" : "Show Archived Tasks on Board"}
+                            >
+                                {showArchivedOnBoard ? <Eye size={12} /> : <EyeOff size={12} />} Archived
+                            </button>
+                        </div>
                     </div>
 
                     <div className="h-6 w-px bg-slate-700 mx-1"></div>
@@ -557,10 +581,51 @@ const ProjectView = () => {
                                 />
                             </div>
                             <div className="flex justify-end gap-2 pt-2">
-                                <button type="button" onClick={() => setShowInviteModal(false)} className="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Cancel</button>
                                 <button type="submit" className="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 rounded font-medium text-white">Invite</button>
                             </div>
                         </form>
+
+                        <div className="border-t border-slate-700 p-4">
+                            <h4 className="text-xs font-semibold text-slate-300 mb-2">Project Members</h4>
+                            <div className="space-y-2 max-h-40 overflow-y-auto">
+                                <div className="flex items-center justify-between bg-slate-700/30 p-2 rounded">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center text-[10px] text-white">
+                                            {project.owner.full_name?.[0]}
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-slate-200">{project.owner.full_name} <span className="text-[10px] text-indigo-400 bg-indigo-500/10 px-1 rounded border border-indigo-500/20 ml-1">Owner</span></p>
+                                            <p className="text-[10px] text-slate-500">{project.owner.email}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                {project.members?.map(member => (
+                                    <div key={member.id} className="flex items-center justify-between bg-slate-700/30 p-2 rounded group">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 bg-slate-600 rounded-full flex items-center justify-center text-[10px] text-white">
+                                                {member.full_name?.[0]}
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-medium text-slate-200">{member.full_name}</p>
+                                                <p className="text-[10px] text-slate-500">{member.email}</p>
+                                            </div>
+                                        </div>
+                                        {user && user.id === project.owner_id && (
+                                            <button
+                                                onClick={() => handleRemoveMember(member.id)}
+                                                className="text-slate-500 hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition"
+                                                title="Remove Member"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                                {(!project.members || project.members.length === 0) && (
+                                    <p className="text-center text-[10px] text-slate-500 py-2">No other members yet</p>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

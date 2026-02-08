@@ -16,6 +16,21 @@ def read_projects(current_user: models.User = Depends(get_current_user), db: Ses
 
 @router.post("/projects/", response_model=schemas.Project)
 def create_project(project: schemas.ProjectCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Check plan limits
+    project_count = db.query(models.Project).filter(models.Project.owner_id == current_user.id).count()
+    limit = 1 # Free plan default
+    
+    if current_user.plan == "paid":
+        limit = 10
+    elif current_user.plan and current_user.plan.startswith("custom_"):
+        try:
+             limit = int(current_user.plan.split("_")[1])
+        except:
+             limit = 1 # Fallback
+    
+    if project_count >= limit:
+         raise HTTPException(status_code=403, detail=f"Project limit reached for your plan ({limit} projects).")
+
     db_project = models.Project(**project.dict(), owner_id=current_user.id)
     db.add(db_project)
     db.commit()
@@ -63,6 +78,26 @@ def invite_user(project_id: int, email: str, current_user: models.User = Depends
     db.commit()
     return {"message": "User invited"}
 
+@router.delete("/projects/{project_id}/members/{user_id}")
+def remove_member(project_id: int, user_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    project = db.query(models.Project).filter(models.Project.id == project_id).first()
+    if not project:
+         raise HTTPException(status_code=404, detail="Project not found")
+    if project.owner_id != current_user.id:
+         raise HTTPException(status_code=403, detail="Only owner can remove members")
+    
+    user_to_remove = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user_to_remove:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if user_to_remove not in project.members:
+        raise HTTPException(status_code=400, detail="User not in project")
+        
+    project.members.remove(user_to_remove)
+    log_activity(db, project_id, f"Removed user {user_to_remove.email}", user_id=current_user.id)
+    db.commit()
+    return {"message": "User removed"}
+
 @router.get("/projects/{project_id}/activity", response_model=List[schemas.ActivityLog])
 def get_activity_log(project_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     project = db.query(models.Project).filter(models.Project.id == project_id).first()
@@ -100,6 +135,12 @@ def create_stage(project_id: int, stage: schemas.StageCreate, current_user: mode
          raise HTTPException(status_code=404, detail="Project not found")
     if project.owner_id != current_user.id and current_user not in project.members:
          raise HTTPException(status_code=403, detail="Not authorized")
+
+    # Check limits for free plan
+    if current_user.plan == "free" or current_user.plan is None:
+        stage_count = db.query(models.Stage).filter(models.Stage.project_id == project_id).count()
+        if stage_count >= 10:
+             raise HTTPException(status_code=403, detail="Free plan is limited to 10 stages.")
     
     db_stage = models.Stage(**stage.dict(), project_id=project_id)
     db.add(db_stage)

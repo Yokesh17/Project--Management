@@ -1,17 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { Link } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/authSlice';
-import { FolderPlus, LogOut, Trash2, ArrowRight, Folder, Clock } from 'lucide-react';
+import { FolderPlus, LogOut, Trash2, ArrowRight, Folder, Clock, Code, X, Check, Copy } from 'lucide-react';
 import ConfirmDialog from '../components/ConfirmDialog';
 
 const Dashboard = () => {
+    const { user } = useSelector(state => state.auth);
     const [projects, setProjects] = useState([]);
     const [showCreate, setShowCreate] = useState(false);
     const [newProject, setNewProject] = useState({ name: '', description: '' });
     const [deleteConfirm, setDeleteConfirm] = useState({ open: false, projectId: null });
     const [loading, setLoading] = useState(true);
+
+    const maxProjects = user?.plan === 'paid' ? 10 : 3;
+    const isLimitReached = projects.length >= maxProjects;
+
+    // Extension Modal State
+    const [showExtensionModal, setShowExtensionModal] = useState(false);
+    const [generatedToken, setGeneratedToken] = useState('');
+    const [tokenError, setTokenError] = useState('');
+    const [tokenLoading, setTokenLoading] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
+
     const dispatch = useDispatch();
 
     const fetchProjects = async () => {
@@ -23,6 +35,20 @@ const Dashboard = () => {
             console.error(error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const generateToken = async () => {
+        setTokenLoading(true);
+        setTokenError('');
+        try {
+            const response = await api.get('/users/api-token');
+            setGeneratedToken(response.data.access_token);
+        } catch (error) {
+            console.error(error);
+            setTokenError(error.response?.data?.detail || 'Failed to generate token');
+        } finally {
+            setTokenLoading(false);
         }
     };
 
@@ -48,6 +74,8 @@ const Dashboard = () => {
             fetchProjects();
         } catch (error) {
             console.error(error);
+        } finally {
+            setDeleteConfirm({ open: false, projectId: null });
         }
     };
 
@@ -56,18 +84,26 @@ const Dashboard = () => {
             {/* Header */}
             <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-10">
                 <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-                    <Link to="/" className="flex items-center gap-2">
+                    <Link to="/dashboard" className="flex items-center gap-2">
                         <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
                             <Folder size={14} className="text-white" />
                         </div>
                         <span className="text-sm font-semibold">ProjectManager</span>
                     </Link>
-                    <button
-                        onClick={() => dispatch(logout())}
-                        className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-red-400 transition"
-                    >
-                        <LogOut size={14} /> Logout
-                    </button>
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setShowExtensionModal(true)}
+                            className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20"
+                        >
+                            <Code size={14} /> VS Code
+                        </button>
+                        <button
+                            onClick={() => dispatch(logout())}
+                            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-red-400 transition"
+                        >
+                            <LogOut size={14} /> Logout
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -76,11 +112,26 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h1 className="text-lg font-semibold">Projects</h1>
-                        <p className="text-xs text-slate-500">{projects.length} project{projects.length !== 1 ? 's' : ''}</p>
+                        <div className="flex items-center gap-2">
+                            <p className="text-xs text-slate-500">{projects.length} project{projects.length !== 1 ? 's' : ''}</p>
+                            <span className="text-slate-700 mx-1">•</span>
+                            <p className={`text-xs font-medium ${isLimitReached ? 'text-amber-500' : 'text-slate-500'}`}>
+                                {projects.length} / {maxProjects} Used ({user?.plan?.startsWith('custom_') ? 'Custom' : (user?.plan === 'paid' ? 'Pro' : 'Free')})
+                            </p>
+                        </div>
                     </div>
                     <button
-                        onClick={() => setShowCreate(true)}
-                        className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded text-xs font-medium transition"
+                        onClick={() => {
+                            if (isLimitReached) {
+                                alert(`You have reached the limit of ${maxProjects} projects on the ${user?.plan || 'free'} plan.`);
+                                return;
+                            }
+                            setShowCreate(true);
+                        }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition ${isLimitReached
+                            ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                            : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                            }`}
                     >
                         <FolderPlus size={14} /> New Project
                     </button>
@@ -182,6 +233,93 @@ const Dashboard = () => {
                 message="This will permanently delete the project and all its tasks, files, and configs."
                 confirmText="Delete"
             />
+
+            {/* VS Code Integration Modal */}
+            {showExtensionModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-slate-800 rounded-xl shadow-2xl border border-slate-700 w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="flex items-center justify-between p-4 border-b border-slate-700 bg-slate-800/50">
+                            <h3 className="font-semibold text-white flex items-center gap-2">
+                                <Code size={18} className="text-blue-400" /> VS Code Integration
+                            </h3>
+                            <button onClick={() => setShowExtensionModal(false)} className="text-slate-400 hover:text-white transition">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            {tokenError && (
+                                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-2 text-red-400 text-sm">
+                                    <span className="font-semibold">Error:</span> {tokenError}
+                                </div>
+                            )}
+                            {!generatedToken ? (
+                                <div className="text-center space-y-4">
+                                    <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto text-blue-400 mb-2">
+                                        <Code size={32} />
+                                    </div>
+                                    <h4 className="text-md font-medium text-white">Connect Extension</h4>
+                                    <p className="text-sm text-slate-400 leading-relaxed">
+                                        Generate a secure access token to connect the
+                                        <span className="text-blue-400 font-medium mx-1">Personal Project Manager</span>
+                                        VS Code extension to your account.
+                                    </p>
+                                    <button
+                                        onClick={generateToken}
+                                        disabled={tokenLoading}
+                                        className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white rounded-lg font-medium transition flex items-center justify-center gap-2"
+                                    >
+                                        {tokenLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Generate Access Token'}
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-start gap-3">
+                                        <Check size={18} className="text-emerald-400 mt-0.5 shrink-0" />
+                                        <div>
+                                            <p className="text-sm font-medium text-emerald-400">Token Generated!</p>
+                                            <p className="text-xs text-emerald-500/80 mt-1">This token is valid for 30 days.</p>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-400 mb-1.5 block">Access Token</label>
+                                        <div className="relative group">
+                                            <input
+                                                readOnly
+                                                value={generatedToken}
+                                                className="w-full bg-slate-950 border border-slate-700 rounded-lg py-2.5 pl-3 pr-10 text-xs font-mono text-slate-300 focus:outline-none focus:border-blue-500 transition"
+                                                onClick={(e) => e.target.select()}
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(generatedToken);
+                                                    setIsCopied(true);
+                                                    setTimeout(() => setIsCopied(false), 3000);
+                                                }}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-500 hover:text-white bg-slate-800 hover:bg-slate-700 rounded transition"
+                                                title="Copy to Clipboard"
+                                            >
+                                                {isCopied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-2 border-t border-slate-700/50">
+                                        <h5 className="text-xs font-medium text-white mb-2">How to use:</h5>
+                                        <ol className="text-xs text-slate-400 space-y-1.5 list-decimal pl-4">
+                                            <li>Open VS Code</li>
+                                            <li>Press <code className="bg-slate-700 px-1 py-0.5 rounded text-slate-200">Ctrl+Shift+P</code></li>
+                                            <li>Run <code className="text-blue-400">Project Manager: Connect with Token</code></li>
+                                            <li>Paste the token above</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

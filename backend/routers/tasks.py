@@ -15,13 +15,20 @@ def create_task(project_id: int, task: schemas.TaskCreate, current_user: models.
         raise HTTPException(status_code=404, detail="Project not found")
     if project.owner_id != current_user.id and current_user not in project.members:
         raise HTTPException(status_code=403, detail="Not authorized")
-        
+
+    # Check task limits for free plan
+    if current_user.plan == "free" or current_user.plan is None:
+        # Count tasks in the project
+        task_count = db.query(models.Task).filter(models.Task.project_id == project_id).count()
+        if task_count >= 500:
+            raise HTTPException(status_code=403, detail="Free plan is limited to 500 tasks per project.")
+
     db_task = models.Task(**task.dict(), project_id=project_id)
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
     
-    log_activity(db, project_id, f"Created task '{task.title}'", user_id=current_user.id)
+    log_activity(db, project_id, f"Created task: {task.title}", user_id=current_user.id)
     
     if task.assignee_id and task.assignee_id != current_user.id:
         create_notification(db, task.assignee_id, f"You have been assigned to task '{task.title}' in project '{project.name}'")

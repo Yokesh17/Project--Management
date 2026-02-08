@@ -33,3 +33,24 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 @router.get("/users/me", response_model=schemas.User)
 async def read_users_me(current_user: models.User = Depends(get_current_user)):
     return current_user
+
+@router.get("/users/api-token", response_model=schemas.Token)
+async def generate_api_token(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Check if user already has a token
+    if current_user.api_token:
+        # Verify if it's still valid (optional, but good practice). For now, return existing.
+        # In a real app, you might want to decode it to check expiry.
+        return {"access_token": current_user.api_token, "token_type": "bearer", "user": current_user}
+
+    # Generate a long-lived token (e.g., 30 days) for API usage
+    from datetime import timedelta
+    access_token = auth.create_access_token(
+        data={"sub": current_user.email},
+        expires_delta=timedelta(days=30)
+    )
+    
+    # Save token to user
+    current_user.api_token = access_token
+    db.commit()
+    
+    return {"access_token": access_token, "token_type": "bearer", "user": current_user}
