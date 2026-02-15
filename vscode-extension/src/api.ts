@@ -59,6 +59,11 @@ export class Api {
         return projects;
     }
 
+    async getProject(projectId: number): Promise<any> {
+        const response = await this.axiosInstance.get(`/projects/${projectId}`);
+        return response.data;
+    }
+
     async getTasks(projectId: number): Promise<any[]> {
         const response = await this.axiosInstance.get(`/projects/${projectId}`);
         return response.data.tasks || [];
@@ -69,10 +74,14 @@ export class Api {
         return response.data;
     }
 
-    async completeTask(taskId: number): Promise<any> {
+    async updateTask(taskId: number, updates: any): Promise<any> {
         const response = await this.axiosInstance.patch(`/tasks/${taskId}`, null, {
-            params: { status: 'DONE' }
+            params: updates
         });
         return response.data;
+    }
+
+    async completeTask(taskId: number): Promise<any> {
+        return this.updateTask(taskId, { status: 'DONE' });
     }
 }

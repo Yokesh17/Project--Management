@@ -110,6 +110,6 @@ This document provides a comprehensive overview of the **Project Management Appl
 *   **UI**: Added loading spinners for Dashboard and Config Board.
 *   **UI**: Added "Show/Hide Archived" toggle in Project Board to allow viewing archived tasks in their original stages.
 *   **VS Code Extension**: Developed and published a VS Code extension "Personal Project Manager" to manage projects and tasks directly from VS Code.
-*   **VS Code Extension**: Added 'Connect with Token' feature to authenticate using a generated API token.
-*   **Backend**: Added `/users/api-token` endpoint to generate long-lived API tokens.
-*   **UI**: Added "VS Code Integration" modal in Dashboard to generate and copy API tokens.
+*   **VS Code Extension**: Replaced basic Tree View with a rich Webview UI used React-like structure for a "SaaS-like" experience.
+*   **VS Code Extension**: Implemented embedded forms for Login and Task Creation, removing native input popups.
+*   **VS Code Extension**: Added real-time Task List management within the sidebar.

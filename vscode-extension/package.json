@@ -27,6 +27,7 @@
     "views": {
       "personalProjectManager-explorer": [
         {
+          "type": "webview",
           "id": "personalProjectManager",
           "name": "Projects",
           "contextualTitle": "Project Manager"
@@ -73,18 +74,6 @@
           "command": "personalProjectManager.createTask",
           "when": "view == personalProjectManager",
           "group": "navigation"
-        }
-      ],
-      "view/item/context": [
-        {
-          "command": "personalProjectManager.completeTask",
-          "when": "view == personalProjectManager && viewItem == taskItem",
-          "group": "inline"
-        },
-        {
-          "command": "personalProjectManager.createTask",
-          "when": "view == personalProjectManager && viewItem == projectItem",
-          "group": "inline"
         }
       ]
     },

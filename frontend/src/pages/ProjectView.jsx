@@ -27,7 +27,7 @@ const ProjectView = () => {
     const [showActivityLog, setShowActivityLog] = useState(false);
     const [showPlanning, setShowPlanning] = useState(false);
     const [showArchived, setShowArchived] = useState(false);
-    const [showArchivedOnBoard, setShowArchivedOnBoard] = useState(false);
+    const [showArchivedOnBoard, setShowArchivedOnBoard] = useState(true);
     const [showProjectFiles, setShowProjectFiles] = useState(false);
     const [showAnalytics, setShowAnalytics] = useState(false);
     const [showAssigneeFilter, setShowAssigneeFilter] = useState(false);
@@ -135,6 +135,13 @@ const ProjectView = () => {
 
         const { draggableId, destination } = result;
         const newStatus = destination.droppableId;
+
+        // Check if task is archived and user is not owner
+        const task = tasks.find(t => t.id === parseInt(draggableId));
+        if (task && isArchived(task) && user?.id !== project.owner_id) {
+            alert('Only the project owner can move archived tasks.');
+            return;
+        }
 
         // Optimistic update
         const updatedTasks = tasks.map(t =>

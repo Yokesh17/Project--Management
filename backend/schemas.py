@@ -157,5 +157,6 @@ class Project(ProjectBase):
     members: List[User] = [] # Include members
     attachments: List[Attachment] = []
     stages: List[Stage] = []
+    configs: List[ConfigBoard] = []
     class Config:
         from_attributes = True
