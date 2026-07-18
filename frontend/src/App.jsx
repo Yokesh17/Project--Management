@@ -9,6 +9,7 @@ import ProjectView from './pages/ProjectView';
 import ConfigBoard from './pages/ConfigBoard';
 import SharedConfig from './pages/SharedConfig';
 import Home from './pages/Home';
+import AdminPanel from './pages/AdminPanel';
 
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -59,6 +60,14 @@ function App() {
           element={
             <PrivateRoute>
               <PageWrapper><ConfigBoard /></PageWrapper>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <PrivateRoute>
+              <PageWrapper><AdminPanel /></PageWrapper>
             </PrivateRoute>
           }
         />

@@ -3,7 +3,7 @@ import api from '../utils/api';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/authSlice';
-import { FolderPlus, LogOut, Trash2, ArrowRight, Folder, Clock, Code, X, Check, Copy } from 'lucide-react';
+import { FolderPlus, LogOut, Trash2, ArrowRight, Folder, Clock, Code, X, Check, Copy, ShieldAlert } from 'lucide-react';
 import ConfirmDialog from '../components/ConfirmDialog';
 
 const Dashboard = () => {
@@ -91,6 +91,14 @@ const Dashboard = () => {
                         <span className="text-sm font-semibold">ProjectManager</span>
                     </Link>
                     <div className="flex items-center gap-4">
+                        {user?.email === import.meta.env.VITE_ADMIN_EMAIL && (
+                            <Link
+                                to="/admin"
+                                className="flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 transition bg-purple-500/10 px-2 py-1 rounded border border-purple-500/20"
+                            >
+                                <ShieldAlert size={14} /> Admin
+                            </Link>
+                        )}
                         <button
                             onClick={() => setShowExtensionModal(true)}
                             className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20"
