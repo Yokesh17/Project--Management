@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
-from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 import models
 from database import engine
 from routers import auth, projects, tasks, configs, notifications, admin
@@ -22,8 +21,19 @@ app = FastAPI()
 # Register SQLAdmin panel at /admin (see admin_panel.py for model views)
 register_admin(app, engine)
 
-# Trust X-Forwarded-Proto from PythonAnywhere's nginx so HTTPS URLs are generated correctly
-app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
+# Fix HTTPS scheme on PythonAnywhere — nginx proxies as http internally
+# This patches scope["scheme"] to https when X-Forwarded-Proto header is present
+class HTTPSFixMiddleware:
+    def __init__(self, app):
+        self.app = app
+    async def __call__(self, scope, receive, send):
+        if scope["type"] in ("http", "websocket"):
+            headers = dict(scope.get("headers", []))
+            if headers.get(b"x-forwarded-proto", b"").decode() == "https":
+                scope = {**scope, "scheme": "https"}
+        await self.app(scope, receive, send)
+
+app.add_middleware(HTTPSFixMiddleware)
 
 
 
