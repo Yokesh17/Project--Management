@@ -29,8 +29,13 @@ class HTTPSFixMiddleware:
     async def __call__(self, scope, receive, send):
         if scope["type"] in ("http", "websocket"):
             headers = dict(scope.get("headers", []))
-            if headers.get(b"x-forwarded-proto", b"").decode() == "https":
-                scope = {**scope, "scheme": "https"}
+            host = headers.get(b"host", b"").decode("utf-8", "ignore")
+            
+            # Unconditionally force HTTPS if on PythonAnywhere, or if header says so
+            if "pythonanywhere.com" in host or headers.get(b"x-forwarded-proto", b"") == b"https":
+                scope = dict(scope)
+                scope["scheme"] = "https"
+                
         await self.app(scope, receive, send)
 
 app.add_middleware(HTTPSFixMiddleware)
